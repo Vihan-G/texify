@@ -6,6 +6,7 @@ import Preview from "@/components/Preview";
 import ExampleGallery from "@/components/ExampleGallery";
 import Toast, { type ToastState, type ToastTone } from "@/components/Toast";
 import { decodeLatexHash } from "@/lib/share";
+import { exportFormulaPng } from "@/lib/export";
 
 const DEFAULT_LATEX = String.raw`x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}`;
 
@@ -14,6 +15,7 @@ export default function Home() {
   const [displayMode, setDisplayMode] = useState(true);
   const [toast, setToast] = useState<ToastState | null>(null);
   const toastIdRef = useRef(0);
+  const formulaContainerRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     const decoded = decodeLatexHash(window.location.hash);
@@ -33,6 +35,39 @@ export default function Home() {
     toastIdRef.current += 1;
     setToast({ id: toastIdRef.current, message, tone });
   }, []);
+
+  const getFormulaNode = useCallback((): HTMLElement | null => {
+    const container = formulaContainerRef.current;
+    if (!container || !container.isConnected) return null;
+    return (
+      (container.querySelector(".katex-display") as HTMLElement | null) ??
+      (container.querySelector(".katex") as HTMLElement | null) ??
+      container
+    );
+  }, []);
+
+  useEffect(() => {
+    const handler = (event: KeyboardEvent) => {
+      const isShortcut =
+        (event.metaKey || event.ctrlKey) && event.key === "Enter";
+      if (!isShortcut) return;
+      event.preventDefault();
+      const node = getFormulaNode();
+      if (!node) {
+        showToast("Nothing to export", "err");
+        return;
+      }
+      exportFormulaPng(node)
+        .then((result) => {
+          showToast(result === "copied" ? "PNG copied" : "PNG downloaded");
+        })
+        .catch(() => {
+          showToast("Export failed — try a smaller formula", "err");
+        });
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+  }, [getFormulaNode, showToast]);
 
   return (
     <div className="flex flex-1 flex-col bg-[#0f0f0f] text-zinc-100">
@@ -67,6 +102,8 @@ export default function Home() {
             source={source}
             displayMode={displayMode}
             onToast={showToast}
+            containerRef={formulaContainerRef}
+            getFormulaNode={getFormulaNode}
           />
         </section>
       </main>

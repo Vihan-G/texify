@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo } from "react";
 import { renderLatex } from "@/lib/katex";
 import Toolbar from "@/components/Toolbar";
 import type { ToastTone } from "@/components/Toast";
@@ -9,24 +9,21 @@ type Props = {
   source: string;
   displayMode: boolean;
   onToast: (message: string, tone?: ToastTone) => void;
+  containerRef: React.RefObject<HTMLDivElement | null>;
+  getFormulaNode: () => HTMLElement | null;
 };
 
-export default function Preview({ source, displayMode, onToast }: Props) {
+export default function Preview({
+  source,
+  displayMode,
+  onToast,
+  containerRef,
+  getFormulaNode,
+}: Props) {
   const result = useMemo(
     () => renderLatex(source, displayMode),
     [source, displayMode],
   );
-  const renderedRef = useRef<HTMLDivElement | null>(null);
-
-  function getFormulaNode(): HTMLElement | null {
-    const container = renderedRef.current;
-    if (!container) return null;
-    return (
-      (container.querySelector(".katex-display") as HTMLElement | null) ??
-      (container.querySelector(".katex") as HTMLElement | null) ??
-      container
-    );
-  }
 
   return (
     <div className="flex h-full min-h-0 flex-col bg-white text-zinc-900">
@@ -56,7 +53,7 @@ export default function Preview({ source, displayMode, onToast }: Props) {
           </p>
         ) : result.ok ? (
           <div
-            ref={renderedRef}
+            ref={containerRef}
             className={
               displayMode
                 ? "flex min-h-full items-center justify-center text-center text-2xl"
