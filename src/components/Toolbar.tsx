@@ -80,7 +80,7 @@ export default function Toolbar({ source, getFormulaNode, onToast }: Props) {
         <ClipboardIcon />
       </IconButton>
       <IconButton
-        label="Copy PNG"
+        label="Copy PNG · ⌘↵"
         disabled={disabled || busy !== null}
         onClick={copyPng}
       >
