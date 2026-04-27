@@ -7,11 +7,15 @@ import type { ToastTone } from "@/components/Toast";
 
 type Props = {
   source: string;
+  displayMode: boolean;
   onToast: (message: string, tone?: ToastTone) => void;
 };
 
-export default function Preview({ source, onToast }: Props) {
-  const result = useMemo(() => renderLatex(source, true), [source]);
+export default function Preview({ source, displayMode, onToast }: Props) {
+  const result = useMemo(
+    () => renderLatex(source, displayMode),
+    [source, displayMode],
+  );
   const renderedRef = useRef<HTMLDivElement | null>(null);
 
   function getFormulaNode(): HTMLElement | null {
@@ -53,7 +57,11 @@ export default function Preview({ source, onToast }: Props) {
         ) : result.ok ? (
           <div
             ref={renderedRef}
-            className="flex min-h-full items-center justify-center text-center text-2xl"
+            className={
+              displayMode
+                ? "flex min-h-full items-center justify-center text-center text-2xl"
+                : "flex min-h-full flex-wrap items-center justify-center gap-x-2 text-center text-xl leading-relaxed"
+            }
             dangerouslySetInnerHTML={{ __html: result.html }}
           />
         ) : (
